@@ -25,8 +25,11 @@ namespace OdinShopping
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
 
+            builder.Services.AddScoped<IItemService, ItemService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ICartService, CartService>();
+            builder.Services.AddScoped<ICartItemService, CartItemService>();
+
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddSwaggerGen(options => {

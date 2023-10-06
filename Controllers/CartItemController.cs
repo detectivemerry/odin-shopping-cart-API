@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OdinShopping.Models;
 using System.Security.Claims;
@@ -14,73 +16,105 @@ namespace OdinShopping.Controllers
         private readonly DataContext _context;
         private readonly IUserService _userService;
         private readonly ICartService _cartService;
-        public CartItemController(DataContext context, IUserService userService, ICartService CartService)
+        private readonly ICartItemService _cartItemService;
+        public CartItemController(DataContext context, IUserService userService, ICartService cartService, ICartItemService cartItemService)
         {
             _context = context;
             _userService = userService;
-            _cartService = CartService;
+            _cartService = cartService;
+            _cartItemService = cartItemService;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Models.CartItemDto>> AddCartItem(CartItemDto request)
+        public async Task<ActionResult<CartItem>> AddCartItem(CartItemDto request)
         {
-            var item = await _context.Items.Where(x => x.ItemId == request.ItemId).FirstOrDefaultAsync();
-            int currentCartId = await _cartService.GetCartId();
-            var currentCart = await _context.Carts.Where(x => x.CartId == currentCartId).FirstOrDefaultAsync();
-            if (item != null && currentCart != null)
-            {
-                Models.CartItem newCartItem = new Models.CartItem();
-                newCartItem.Quantity = request.Quantity;
-                newCartItem.Item = item;
-                newCartItem.TotalCost = item.Price * request.Quantity;
-                newCartItem.CartId = currentCartId;
-                newCartItem.Cart = currentCart;
-                _context.CartItems.Add(newCartItem);
-                await _context.SaveChangesAsync();
+            var cartItem = await _cartItemService.AddCartItem(request);
 
-                return Ok(request);
-            }
+            if (cartItem != null)
+                return Ok(cartItem);
+            else
+                return BadRequest();    
+        }
+
+        [HttpPut]
+        public async Task<ActionResult<List<CartItem>>> Update(CartItemDto request)
+        {
+            var cartItem = await _cartItemService.UpdateCartItem(request);
+            if (cartItem != null)
+                return Ok(cartItem);
             else
                 return BadRequest();
         }
 
         [Route("{id}")]
-        [HttpPut]
-        public async Task<ActionResult<List<Models.CartItem>>> Update(int id, [FromBody] int newQuantity)
-        {
-            var cartItemToBeUpdated = await _context.CartItems.FindAsync(id);
-
-            if (cartItemToBeUpdated == null)
-            {
-                return BadRequest("item with Id not found");
-            }
-            else
-            {
-                cartItemToBeUpdated.Quantity = newQuantity;
-                await _context.SaveChangesAsync();
-                return Ok();
-            }
-
-        }
-
-        [Route("{id}")]
         [HttpDelete]
-        public async Task<ActionResult<List<Models.CartItem>>> Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            var cartItemToBeDeleted = await _context.CartItems.FindAsync(id);
+            bool wasItemDeleted = await _cartItemService.DeleteCartItem(id);
 
-            if (cartItemToBeDeleted == null)
-            {
-                return BadRequest("item with Id not found");
-            }
-            else
-            {
-                _context.CartItems.Remove(cartItemToBeDeleted);
-                await _context.SaveChangesAsync();
+            if (wasItemDeleted)
                 return Ok();
-            }
-
+            else
+                return BadRequest();
         }
+
+
+        //[Route("{id}")]
+        //[HttpPut]
+        //public async Task<ActionResult<List<Models.CartItem>>> Update(CartItemDto request, int id)
+        //{
+        //    var cartItemToBeUpdated = await _context.CartItems.FindAsync(id);
+        //    var item = await _context.Items.Where(x => x.ItemId == request.ItemId).FirstOrDefaultAsync();
+
+        //    if (cartItemToBeUpdated != null && item != null)
+        //    {
+        //        // Check if item has sufficient quantity left
+        //        if (item.QuantityLeft + cartItemToBeUpdated.Quantity < request.Quantity)
+        //            return BadRequest();
+        //        // Update CartItem
+        //        cartItemToBeUpdated.Quantity = request.Quantity;
+        //        cartItemToBeUpdated.TotalCost = request.Quantity * item.Price;
+        //        // Update Item QuantityLeft
+        //        item.QuantityLeft = item.QuantityLeft + cartItemToBeUpdated.Quantity - request.Quantity;
+
+        //        await _context.SaveChangesAsync();
+        //        return Ok();    
+        //    }
+        //    else
+        //    {
+        //        return BadRequest("item with Id not found");
+        //    }
+        //}
+
+        //[Route("{id}")]
+        //[HttpDelete]
+        //public async Task<ActionResult<List<Models.CartItem>>> Delete(int id)
+        //{
+        //    var cartItemToBeDeleted = await _context.CartItems.FindAsync(id);
+
+        //    if (cartItemToBeDeleted != null)
+        //    {
+        //        var item = await _context.Items.Where(x => x.ItemId == cartItemToBeDeleted.Item.ItemId).FirstOrDefaultAsync();
+
+        //        if(item != null)
+        //        {
+        //            // Update Item QuantityLeft
+        //            item.QuantityLeft += cartItemToBeDeleted.Quantity;
+
+        //            // Delete CartItem
+        //            _context.CartItems.Remove(cartItemToBeDeleted);
+
+        //            await _context.SaveChangesAsync();
+        //            return Ok();
+        //        }
+        //        else
+        //            return BadRequest("item with Id not found");
+        //    }
+        //    else
+        //        return BadRequest("CartItem with Id not found");
+
+
+        //}
 
     }
 }

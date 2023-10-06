@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
-using Azure.Core;
+using OdinShopping.Models;
+using Microsoft.AspNetCore.Authorization;
+using OdinShopping.Services;
 
 namespace OdinShopping.Controllers
 {
@@ -9,83 +9,67 @@ namespace OdinShopping.Controllers
     [ApiController]
     public class ItemController : Controller
     {
+        private readonly IItemService _itemService;
 
-        private readonly DataContext _context;
-
-        public ItemController(DataContext context)
+        public ItemController(IItemService itemService)
         {
-            _context = context;
+            _itemService = itemService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Models.Item>>> Get()
+        public async Task<ActionResult<List<Item>>> Get()
         {
-            List<Models.Item> items = await _context.Items
-                .Where(x => x.QuantityLeft > 0)
-                .ToListAsync();
-            return Ok(items);
+            List<Item> result = await _itemService.GetAllIAvailableItems();
+ 
+            if (result.Count > 1)
+                return Ok(result);
+            else
+                return NotFound();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<List<Models.Item>>> Get(int id)
+        public async Task<ActionResult<List<Item>>> Get(int id)
         {
-            //List<Models.Item> items = await _context.Items.ToListAsync();
-            //var currentItem = items.Find(i => i.Id == id); 
+            var currentItem = await _itemService.GetItem(id);
 
-            var currentItem = await _context.Items.FindAsync(id);
-
-            if (currentItem == null)
-            {
-                return BadRequest("item with Id not found");
-            }
-
-
-            return Ok(currentItem);
+            if (currentItem != null)
+                return Ok(currentItem);
+            else
+                return NotFound();
         }
 
+        [Authorize] //Protect this with admin role
         [HttpPost]
-        public async Task<ActionResult<List<Models.Item>>> AddItem(Models.Item item)
+        public async Task<ActionResult<List<Item>>> AddItem(Item item) 
         {
-            _context.Items.Add(item);
-            await _context.SaveChangesAsync();
-            return Ok(_context.Items);
+            Item addedItem = await _itemService.AddItem(item);
+            if (addedItem != null)
+                return Ok(item);
+            else
+                return BadRequest();
         }
 
+        [Authorize] //Protect this with admin role
         [HttpPut]
-        public async Task<ActionResult<List<Models.Item>>> UpdateItem(Models.Item request)
+        public async Task<ActionResult<List<Item>>> UpdateItem(ItemDto request) 
         {
-            //var currentItem = items.Find(i => i.Id == request.Id);
+            Item updatedItem = await _itemService.UpdateItem(request);
 
-            var dbItem = await _context.Items.FindAsync(request.ItemId);
-
-            if (dbItem == null)
-            {
+            if (updatedItem != null)
+                return Ok(updatedItem);                
+            else
                 return BadRequest("item with Id not found");
-            }
-
-            dbItem.Name = request.Name;
-            dbItem.Price = request.Price;
-            dbItem.Description = request.Description;
-
-            
-            await _context.SaveChangesAsync();
-
-            return Ok(await _context.Items.ToListAsync());
         }
 
+        [Authorize] //Protect this with admin role
         [HttpDelete("{id}")]
-        public async Task<ActionResult<List<Models.Item>>> Delete(int id)
+        public async Task<ActionResult<List<Item>>> Delete(int id)
         {
-            var currentItem = await _context.Items.FindAsync(id);
-
-            if (currentItem == null)
-            {
-                return BadRequest("item with Id not found");
-            }
-
-            _context.Items.Remove(currentItem);
-            await _context.SaveChangesAsync();
-            return Ok();
+            bool isDeleted = await _itemService.DeleteItem(id);
+            if (isDeleted)
+                return Ok();
+            else
+                return NotFound();
         }
     }
 }

@@ -14,5 +14,5 @@ Backend API for OdinShopping web application. These APIs are built using ASP .NE
 ## Database Schema
 
 The following ERD diagram showcases the relationship between tables in OdinShopping:
-![ERD diagram](Images/OdinShoppign_ERD.png)
+![ERD diagram](Images/OdinShopping_ERD.png)
 

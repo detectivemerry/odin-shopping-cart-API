@@ -2,8 +2,8 @@
 {
     public class CartItemDto
     {
+        public int CartItemId { get; set; }
         public int ItemId { get; set; }
         public int Quantity { get; set; }
-        public double TotalCost { get; set; }
     }
 }

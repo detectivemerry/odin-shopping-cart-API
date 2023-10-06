@@ -13,48 +13,39 @@ namespace OdinShopping.Controllers
     public class CartController : ControllerBase
     {
         private readonly DataContext _context;
-        private readonly IUserService _userService;
         private readonly ICartService _cartService;
-        public CartController(DataContext context, IUserService userService, ICartService CartService)
+        public CartController(DataContext context, ICartService CartService)
         {
             _context = context;
-            _userService = userService;
             _cartService = CartService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<Models.Cart>> Get()
+        public async Task<ActionResult<Cart>> Get()
         {
-            int currentCartId = await _cartService.GetCartId();
-            var currentCart = await _context.Carts.Where(x => x.CartId == currentCartId).FirstOrDefaultAsync();
+            var cart = await _cartService.GetCartWithCartItemsAndItems();
 
-            if (currentCart != null)
-                return Ok(currentCart);
+            if (cart != null)
+                return Ok(cart);
             else
                 return BadRequest();
-        }
 
-        [HttpGet]
-        [Route("CartItems")]
-        public async Task<ActionResult<List<Models.CartItem>>> GetCartItems()
-        {
-            int currentCartId = await _cartService.GetCartId();
-            var currentCart = await _context.Carts.Where(x => x.CartId == currentCartId).FirstOrDefaultAsync();
-            var result = new List<Models.CartItem>();
+            //int currentCartId = await _cartService.GetCartId();
+            //var currentCart = await _context.Carts.Where(x => x.CartId == currentCartId)
+            //                                        .Include(cart => cart.CartItems)
+            //                                        .FirstOrDefaultAsync();
+            //if (currentCart != null)
+            //{
+            //    _context.Entry(currentCart)
+            //            .Collection(cart => cart.CartItems!)
+            //            .Query()
+            //            .Include(cartItem => cartItem.Item)
+            //            .Load();
 
-            if (currentCart != null && currentCart.CartItems != null)
-            {
-                foreach (Models.CartItem cartItem in currentCart.CartItems)
-                {
-                    result.Add(cartItem);
-                }
-
-                return Ok(result);
-            }
-            else
-            {
-                return BadRequest();
-            }
+            //    return Ok(currentCart);
+            //}
+            //else
+            //    return BadRequest();
         }
     }
 }
