@@ -26,9 +26,11 @@ namespace OdinShopping
             builder.Services.AddEndpointsApiExplorer();
 
             builder.Services.AddScoped<IItemService, ItemService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ICartService, CartService>();
             builder.Services.AddScoped<ICartItemService, CartItemService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
 
             builder.Services.AddHttpContextAccessor();
 

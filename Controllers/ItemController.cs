@@ -7,7 +7,7 @@ namespace OdinShopping.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ItemController : Controller
+    public class ItemController : ControllerBase
     {
         private readonly IItemService _itemService;
 
@@ -38,7 +38,7 @@ namespace OdinShopping.Controllers
                 return NotFound();
         }
 
-        [Authorize] //Protect this with admin role
+        [Authorize(Roles = "Admin")] 
         [HttpPost]
         public async Task<ActionResult<List<Item>>> AddItem(Item item) 
         {
@@ -49,7 +49,7 @@ namespace OdinShopping.Controllers
                 return BadRequest();
         }
 
-        [Authorize] //Protect this with admin role
+        [Authorize(Roles = "Admin")]
         [HttpPut]
         public async Task<ActionResult<List<Item>>> UpdateItem(ItemDto request) 
         {
@@ -61,7 +61,7 @@ namespace OdinShopping.Controllers
                 return BadRequest("item with Id not found");
         }
 
-        [Authorize] //Protect this with admin role
+        [Authorize(Roles = "Admin")] 
         [HttpDelete("{id}")]
         public async Task<ActionResult<List<Item>>> Delete(int id)
         {

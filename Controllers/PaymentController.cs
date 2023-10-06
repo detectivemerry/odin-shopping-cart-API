@@ -7,34 +7,35 @@ namespace OdinShopping.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class PaymentController : Controller
+    public class PaymentController : ControllerBase
     {
-        private readonly DataContext _context;
+        private readonly IPaymentService _paymentService;
 
-        public PaymentController(DataContext context)
+        public PaymentController(IPaymentService paymentService)
         {
-            _context = context;
+            _paymentService = paymentService;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Models.Payment>> Get(PaymentDto request)
+        public async Task<ActionResult<Payment>> Add(PaymentDto request)
         {
-            //Add Payment 
-            Models.Payment payment = new Models.Payment();
-            payment.Amount = request.Amount;
-            payment.PaymentType =  request.PaymentType;
-            _context.Payment.Add(payment);
+            Payment newPayment = await _paymentService.AddPayment(request);
 
-            //Update Cart
-            var currentCart = await _context.Carts.Where(x => x.CartId == request.Cart.CartId).FirstOrDefaultAsync();
-            if (currentCart != null)
-                currentCart.Payment = payment;
+            if(newPayment != null)
+                return Ok(newPayment);
             else
                 return BadRequest();
+        }
 
-            await _context.SaveChangesAsync();
+        [HttpGet, Authorize(Roles = "Admin")]
+        public async Task<ActionResult<Payment>> GetPaymentWithinDate([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        {
+            var newPayment = await _paymentService.GetPaymentWithinDate(startDate, endDate);
 
-            return Ok(payment);
+            if (newPayment != null)
+                return Ok(newPayment);
+            else
+                return BadRequest();
         }
     }
 }

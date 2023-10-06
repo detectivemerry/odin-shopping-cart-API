@@ -14,7 +14,7 @@ namespace OdinShopping.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController :ControllerBase
+    public class AuthController : ControllerBase
     {
         private readonly DataContext _context;
         private readonly IConfiguration _configuration;
