@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Server.IIS.Core;
+using Microsoft.EntityFrameworkCore;
+using OdinShopping.Exceptions;
 using OdinShopping.Models;
 
 namespace OdinShopping.Services
@@ -9,6 +11,7 @@ namespace OdinShopping.Services
         public ItemService(DataContext context)
         {
             _context = context;
+
         }
 
         // Get all items with Quantity above 0
@@ -29,7 +32,7 @@ namespace OdinShopping.Services
             if (currentItem != null)
                 return currentItem;
             else
-                return new Item();
+                throw new ItemNotFoundException(itemId);
         }
 
         public async Task<Item> AddItem(Item request)
@@ -40,7 +43,7 @@ namespace OdinShopping.Services
             if (result > 0)
                 return request;
             else
-                return new Item();
+                throw new OdinShoppingException("Add transaction was not successful");
         }
 
         public async Task<Item> UpdateItem(ItemDto request)
@@ -55,13 +58,15 @@ namespace OdinShopping.Services
                 dbItem.Description = request.Description;
                 dbItem.QuantityLeft = request.QuantityLeft;
             }
+            else
+                throw new ItemNotFoundException(request.ItemId);
 
             int result = await _context.SaveChangesAsync();
 
-            if (dbItem == null || result < 0)
-                return new Item();
-            else
+            if (dbItem != null && result > 0)
                 return dbItem;
+            else
+                throw new OdinShoppingException("Update transaction was not successful");
         }
 
         public async Task<bool> DeleteItem(int itemId)
@@ -71,11 +76,14 @@ namespace OdinShopping.Services
             if (currentItem != null)
                 _context.Items.Remove(currentItem);
             else
-                return false;
+                throw new ItemNotFoundException(itemId);
 
             int result = await _context.SaveChangesAsync();
 
-            return result > 0 ? true : false;
+            if (result > 0)
+                return true;
+            else
+                throw new OdinShoppingException("Delete transaction was not successful");
         }
     }
 }

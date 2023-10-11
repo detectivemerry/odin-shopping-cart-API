@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OdinShopping.Exceptions;
 using OdinShopping.Models;
 
 namespace OdinShopping.Controllers
@@ -19,23 +20,29 @@ namespace OdinShopping.Controllers
         [HttpPost]
         public async Task<ActionResult<Payment>> Add(PaymentDto request)
         {
-            Payment newPayment = await _paymentService.AddPayment(request);
-
-            if(newPayment != null)
+            try
+            {
+                Payment newPayment = await _paymentService.AddPayment(request);
                 return Ok(newPayment);
-            else
+            }
+            catch(OdinShoppingException)
+            {
                 return BadRequest();
+            }   
         }
 
         [HttpGet, Authorize(Roles = "Admin")]
         public async Task<ActionResult<Payment>> GetPaymentWithinDate([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
-            var newPayment = await _paymentService.GetPaymentWithinDate(startDate, endDate);
-
-            if (newPayment != null)
+            try
+            {
+                var newPayment = await _paymentService.GetPaymentWithinDate(startDate, endDate);
                 return Ok(newPayment);
-            else
+            }
+            catch (OdinShoppingException)
+            {
                 return BadRequest();
+            }   
         }
     }
 }

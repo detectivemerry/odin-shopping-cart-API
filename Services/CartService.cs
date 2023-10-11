@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
+using OdinShopping.Exceptions;
 using OdinShopping.Models;
 
 namespace OdinShopping.Services
@@ -62,31 +63,6 @@ namespace OdinShopping.Services
             }
         }
 
-        public async Task<int> GetCartId()
-        {
-            var userIdClaim = _userService.GetUserId();
-            bool IsConverted = int.TryParse(userIdClaim, out int userId);
-            if (!IsConverted)
-                throw new Exception();
-
-            var cart = await _context.Carts.Where(x => x.UserId == userId && x.Payment == null).FirstOrDefaultAsync();
-            if (cart != null) // User has a cart without payment
-                return cart.CartId;
-
-            else // User does not have a cart without payment, create new cart
-            {
-                var newCart = new Models.Cart();
-                newCart.UserId = userId;
-                _context.Carts.Add(newCart);
-                await _context.SaveChangesAsync();
-                var addedCart = await _context.Carts.Where(x => x.UserId == userId && x.Payment == null).FirstOrDefaultAsync();
-                if(addedCart != null)
-                    return addedCart.CartId;
-                else
-                    throw new Exception();
-            }
-        }
-
         public async Task<Cart> GetCartWithCartItemsAndItems()
         {
             Cart currentCart = await InitializeCart();
@@ -98,7 +74,10 @@ namespace OdinShopping.Services
                         .ThenInclude(item => item.Category)
                     .Load();
 
-            return currentCart;
+            if (currentCart != null)
+                return currentCart;
+            else
+                throw new OdinShoppingException("No cart was returned");
         }
 
         public async Task<CartItem> FindItemInCart(int itemId)

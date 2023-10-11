@@ -2,6 +2,7 @@
 using OdinShopping.Models;
 using Microsoft.AspNetCore.Authorization;
 using OdinShopping.Services;
+using OdinShopping.Exceptions;
 
 namespace OdinShopping.Controllers
 {
@@ -21,55 +22,77 @@ namespace OdinShopping.Controllers
         {
             List<Item> result = await _itemService.GetAllIAvailableItems();
  
-            if (result.Count > 1)
+            if (result.Count >= 1)
                 return Ok(result);
             else
                 return NotFound();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<List<Item>>> Get(int id)
+        public async Task<ActionResult<Item>> Get(int id)
         {
-            var currentItem = await _itemService.GetItem(id);
-
-            if (currentItem != null)
+            try
+            {
+                var currentItem = await _itemService.GetItem(id);
                 return Ok(currentItem);
-            else
+            }
+            catch(ItemNotFoundException)
+            {
                 return NotFound();
+            }  
         }
 
         [Authorize(Roles = "Admin")] 
         [HttpPost]
-        public async Task<ActionResult<List<Item>>> AddItem(Item item) 
+        public async Task<ActionResult<Item>> AddItem(Item item) 
         {
-            Item addedItem = await _itemService.AddItem(item);
-            if (addedItem != null)
+            try
+            {
+                Item addedItem = await _itemService.AddItem(item);
                 return Ok(item);
-            else
+            }
+            catch(OdinShoppingException)
+            {
                 return BadRequest();
+            }
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPut]
         public async Task<ActionResult<List<Item>>> UpdateItem(ItemDto request) 
         {
-            Item updatedItem = await _itemService.UpdateItem(request);
-
-            if (updatedItem != null)
-                return Ok(updatedItem);                
-            else
-                return BadRequest("item with Id not found");
+            try
+            {
+                Item updatedItem = await _itemService.UpdateItem(request);
+                return Ok(updatedItem);
+            }
+            catch(ItemNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (OdinShoppingException)
+            {
+                return BadRequest();
+            }
         }
 
         [Authorize(Roles = "Admin")] 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<List<Item>>> Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            bool isDeleted = await _itemService.DeleteItem(id);
-            if (isDeleted)
+            try
+            {
+                bool isDeleted = await _itemService.DeleteItem(id);
                 return Ok();
-            else
+            }
+            catch(ItemNotFoundException)
+            {
                 return NotFound();
+            }
+            catch(OdinShoppingException)
+            {
+                return BadRequest();
+            }
         }
     }
 }

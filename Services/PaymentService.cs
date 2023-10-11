@@ -1,4 +1,5 @@
-﻿using OdinShopping.Models;
+﻿using OdinShopping.Exceptions;
+using OdinShopping.Models;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
@@ -15,7 +16,7 @@ namespace OdinShopping.Services
         public async Task<Payment> AddPayment(PaymentDto request)
         {
             //Add Payment 
-            Models.Payment payment = new Payment();
+            Payment payment = new Payment();
             payment.Amount = request.Amount;
             payment.PaymentType = request.PaymentType;
             payment.TransactionDate = DateTime.Now;
@@ -33,7 +34,7 @@ namespace OdinShopping.Services
                     return payment; 
             }
 
-            return new Payment();
+            throw new OdinShoppingException();
         }
 
         public async Task<List<Payment>> GetPaymentWithinDate(DateTime startDate, DateTime endDate)

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OdinShopping.Exceptions;
 using OdinShopping.Models;
 
 namespace OdinShopping.Services
@@ -56,7 +57,8 @@ namespace OdinShopping.Services
                     if (result > 0)
                         return request;
                 }
-                return new CartItemDto();
+
+                throw new OdinShoppingException();
             }
         }
 
@@ -82,8 +84,9 @@ namespace OdinShopping.Services
 
                 if (result > 0)
                     return request;
-            } 
-            return new CartItemDto();
+            }
+
+            throw new OdinShoppingException();
         }
 
         public async Task<bool> DeleteCartItem(int cartItemId)
@@ -106,10 +109,10 @@ namespace OdinShopping.Services
                     if (result > 0)
                         return true;
                     else
-                        return false;
+                        throw new OdinShoppingException();
                 }
             }
-            return false;
+            throw new OdinShoppingException();
         }
     }
 }

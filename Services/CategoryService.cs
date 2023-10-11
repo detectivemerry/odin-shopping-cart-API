@@ -1,4 +1,5 @@
 ﻿using Azure.Core;
+using OdinShopping.Exceptions;
 using OdinShopping.Models;
 
 namespace OdinShopping.Services
@@ -26,7 +27,7 @@ namespace OdinShopping.Services
             if (result > 0)
                 return newCategory;
             else
-                return new Category();
+                throw new OdinShoppingException();
         }
 
         public async Task<Category> UpdateCategory(string categoryName, int categoryId)
@@ -42,7 +43,7 @@ namespace OdinShopping.Services
                     return category;
             }
 
-            return new Category();
+            throw new OdinShoppingException();
         }
 
         public async Task<bool> DeleteCategory(int categoryId)
@@ -52,11 +53,14 @@ namespace OdinShopping.Services
             if (category != null)
                 _context.Categories.Remove(category);
             else
-                return false;
+                throw new CategoryNotFoundException(categoryId);
 
             int result = await _context.SaveChangesAsync();
 
-            return result > 0 ? true : false;
+            if (result > 0)
+                return true;
+            else
+                throw new OdinShoppingException();
         }
     }
 }

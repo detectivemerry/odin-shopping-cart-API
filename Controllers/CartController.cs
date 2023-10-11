@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using OdinShopping.Exceptions;
 using OdinShopping.Models;
-using System.Collections.Generic;
-using System.Security.Claims;
+
 
 namespace OdinShopping.Controllers
 {
@@ -21,12 +20,15 @@ namespace OdinShopping.Controllers
         [HttpGet]
         public async Task<ActionResult<Cart>> Get()
         {
-            var cart = await _cartService.GetCartWithCartItemsAndItems();
-
-            if (cart != null)
+            try
+            {
+                var cart = await _cartService.GetCartWithCartItemsAndItems();
                 return Ok(cart);
-            else
+            }
+            catch (OdinShoppingException)
+            {
                 return BadRequest();
+            }
         }
     }
 }

@@ -9,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
+using OdinShopping.Exceptions;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace OdinShopping.Controllers
 {
@@ -29,25 +31,21 @@ namespace OdinShopping.Controllers
         [HttpGet, Authorize]
         public ActionResult<string> GetMe() //Implement this HTTP context when using [Authorize]
         {
-            // One way to retrieve token information
-            // May lead to Fat controllers, for best practices, use Service Dependency Injection instead
-            //var userName = User?.Identity?.Name; // From Claim
-            //if (userName == null)
-            //{
-            //    return BadRequest();
-            //}
+            try
+            {
+                var userName = _userService.GetUserName();
+                return Ok(userName);
+            }
+            catch(OdinShoppingException)
+            {
+                return BadRequest();
+            }
 
-            ////var userName2 = await _context.Users.FindFirstValue(userName);
-            //return Ok(userName);
-
-            // Best practice retrieving HTTP context
-            var userName = _userService.GetUserName();
-            return Ok(userName);
         }
 
 
         [HttpPost("register")]
-        public async Task<ActionResult<Models.User>> Register(UserDto request)
+        public async Task<ActionResult<User>> Register(UserDto request)
         {
             Models.User user = new Models.User();
             user.Username = request.Username;
@@ -58,10 +56,15 @@ namespace OdinShopping.Controllers
             user.Carts = null;
 
             _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var result = await _context.SaveChangesAsync();
 
-            string token = CreateToken(user);
-            return Ok(token);
+            if(result > 0)
+            {
+                string token = CreateToken(user);
+                return Ok(token);
+            }
+            else
+                return BadRequest();
         }
 
         private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)

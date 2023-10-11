@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using OdinShopping.Exceptions;
+using System.Security.Claims;
 
 namespace OdinShopping.Services
 {
@@ -21,10 +22,10 @@ namespace OdinShopping.Services
                     result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
             }
 
-            if(result != null)
+            if (result != null)
                 return result;
             else
-                return string.Empty;
+                throw new OdinShoppingException();
         }
 
         public string GetUserId()

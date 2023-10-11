@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OdinShopping.Exceptions;
 using OdinShopping.Models;
 
 namespace OdinShopping.Controllers
@@ -20,7 +21,7 @@ namespace OdinShopping.Controllers
         {
             var result = await _categoryService.GetCategory();
 
-            if (result.Count > 1)
+            if (result.Count >= 1)
                 return Ok(result);
             else
                 return NotFound();
@@ -30,34 +31,49 @@ namespace OdinShopping.Controllers
         [HttpPost]
         public async Task<ActionResult<List<Item>>> Add(string categoryName)
         {
-            var addedCategory = await _categoryService.AddCategory(categoryName);
-            if (addedCategory != null)
+            try
+            {
+                var addedCategory = await _categoryService.AddCategory(categoryName);
                 return Ok(addedCategory);
-            else
+            }
+            catch(OdinShoppingException)
+            {
                 return BadRequest();
+            }
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<List<Item>>> Update(string categoryName, [FromRoute] int id)
         {
-            var updatedItem = await _categoryService.UpdateCategory(categoryName, id);
-
-            if (updatedItem != null)
+            try
+            {
+                var updatedItem = await _categoryService.UpdateCategory(categoryName, id);
                 return Ok(updatedItem);
-            else
-                return BadRequest("item with Id not found");
+            }
+            catch(OdinShoppingException)
+            {
+                return BadRequest();
+            }
         }
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<List<Item>>> Delete(int id)
         {
-            bool isDeleted = await _categoryService.DeleteCategory(id);
-            if (isDeleted)
+            try
+            {
+                bool isDeleted = await _categoryService.DeleteCategory(id);
                 return Ok();
-            else
+            }
+            catch (CategoryNotFoundException)
+            {
                 return NotFound();
+            }
+            catch (OdinShoppingException)
+            {
+                return BadRequest();
+            }      
         }
     }
 }
